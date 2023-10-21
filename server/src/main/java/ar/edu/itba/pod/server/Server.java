@@ -27,6 +27,9 @@ public class Server {
 
         config.setProperty("hazelcast.logging.type", "none");
 
+        config.getMultiMapConfig(Util.HAZELCAST_NAMESPACE)
+                .setValueCollectionType(MultiMapConfig.ValueCollectionType.LIST);
+
         // Start cluster
         final HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
         logger.info("Hazelcast cluster discoverable on " + instance.getCluster().getLocalMember().getAddress());
