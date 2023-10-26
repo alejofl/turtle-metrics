@@ -8,6 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
@@ -25,10 +28,16 @@ public class Server {
         final NetworkConfig networkConfig = new NetworkConfig().setJoin(joinConfig);
         config.setNetworkConfig(networkConfig);
 
-        config.setProperty("hazelcast.logging.type", "none");
+        config.setProperty("hazelcast.logging.type", "debug");
 
         config.getMultiMapConfig(Util.HAZELCAST_NAMESPACE)
                 .setValueCollectionType(MultiMapConfig.ValueCollectionType.LIST);
+
+        java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
+        rootLogger.setLevel(Level.FINE);
+        for(Handler h : rootLogger.getHandlers()) {
+            h.setLevel(Level.FINE);
+        }
 
         // Start cluster
         final HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);

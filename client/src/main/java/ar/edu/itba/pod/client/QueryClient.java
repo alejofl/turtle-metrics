@@ -1,8 +1,8 @@
 package ar.edu.itba.pod.client;
 
 import ar.edu.itba.pod.Util;
-import ar.edu.itba.pod.client.data.Bike;
-import ar.edu.itba.pod.client.data.Station;
+import ar.edu.itba.pod.data.Bike;
+import ar.edu.itba.pod.data.Station;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientNetworkConfig;
@@ -12,12 +12,16 @@ import com.hazelcast.core.MultiMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
@@ -25,16 +29,33 @@ import java.util.stream.Stream;
 public abstract class QueryClient {
     private final static Logger logger = LoggerFactory.getLogger(QueryClient.class);
 
-    private final HazelcastInstance hz;
+    private HazelcastInstance hz;
     private String[] addresses;
     private Path bikesPath;
     private Path stationsPath;
     private Path outPath;
 
     public QueryClient() {
-        checkArguments();
-        this.hz = startHazelcastClient(this.addresses);
-        loadData();
+        try {
+            checkArguments();
+            this.hz = startHazelcastClient(this.addresses);
+            loadData();
+            resolveQuery();
+            destroyData();
+            this.hz.shutdown();
+        } catch (IllegalArgumentException e) {
+            // TODO
+        } catch (ExecutionException | InterruptedException e) {
+            // TODO
+        }
+    }
+
+    public Path getOutPath() {
+        return outPath;
+    }
+
+    public HazelcastInstance getHz() {
+        return hz;
     }
 
     private HazelcastInstance startHazelcastClient(String[] addresses) {
@@ -109,11 +130,11 @@ public abstract class QueryClient {
 
                 service.submit(new LoadBikeRunnable(
                         hz.getMultiMap(Util.HAZELCAST_NAMESPACE),
-                        new Bike(
-                                LocalDateTime.parse(fields[0], Util.INPUT_DATETIME_FORMAT),
-                                LocalDateTime.parse(fields[2], Util.INPUT_DATETIME_FORMAT),
+                        Bike.of(
                                 Integer.parseInt(fields[1]),
                                 Integer.parseInt(fields[3]),
+                                LocalDateTime.parse(fields[0], Util.INPUT_DATETIME_FORMAT),
+                                LocalDateTime.parse(fields[2], Util.INPUT_DATETIME_FORMAT),
                                 fields[4].charAt(0) == '1'
                         )
                 ));
@@ -134,11 +155,11 @@ public abstract class QueryClient {
 
                 service.submit(new LoadStationRunnable(
                         hz.getMap(Util.HAZELCAST_NAMESPACE),
-                        new Station(
+                        Station.of(
                                 Integer.parseInt(fields[0]),
                                 fields[1],
-                                new BigDecimal(fields[2]),
-                                new BigDecimal(fields[3])
+                                Double.parseDouble(fields[2]),
+                                Double.parseDouble(fields[3])
                         )
                 ));
             });
@@ -147,6 +168,35 @@ public abstract class QueryClient {
         } catch (IOException | InterruptedException e) {
             // TODO log error
             System.exit(2);
+        }
+    }
+
+    public abstract void resolveQuery() throws ExecutionException, InterruptedException;
+
+    public abstract String getQueryNumber();
+
+    public abstract String getQueryHeader();
+
+    private void destroyData() {
+        hz.getMap(Util.HAZELCAST_NAMESPACE).clear();
+        hz.getMultiMap(Util.HAZELCAST_NAMESPACE).clear();
+    }
+
+    public void writeResults(Collection<? extends Result> results) {
+        Path queryPath = outPath.resolve("query" + getQueryNumber() + ".csv");
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                queryPath, StandardOpenOption.WRITE,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING
+        )) {
+            writer.write(getQueryHeader());
+            writer.newLine();
+            for (Result result : results) {
+                writer.write(result.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            // TODO
         }
     }
 
@@ -161,7 +211,7 @@ public abstract class QueryClient {
 
         @Override
         public void run() {
-            mm.put(bike.startStationPK(), bike);
+            mm.put(bike.getStartStationPK(), bike);
         }
     }
 
@@ -176,7 +226,7 @@ public abstract class QueryClient {
 
         @Override
         public void run() {
-            m.put(station.pk(), station);
+            m.put(station.getPk(), station);
         }
     }
 }
