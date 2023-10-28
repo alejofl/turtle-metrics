@@ -9,9 +9,23 @@
 		</layout>
 	</appender>
 
+	<appender name="time" class="org.apache.log4j.FileAppender">
+		<param name="file" value="${outPath}/${timeLogFile}" />
+		<param name="append" value="false" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{dd/MM/yyyy HH:mm:ss:SSSS} %c{1} - %m%n"/>
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMin" value="INFO"/>
+			<param name="LevelMax" value="INFO"/>
+			<param name="AcceptOnMatch" value="true"/>
+		</filter>
+	</appender>
+
 	<root>
 		<level value="INFO" />
 		<appender-ref ref="console" />
+		<appender-ref ref="time" />
 	</root>
 
 </log4j:configuration>

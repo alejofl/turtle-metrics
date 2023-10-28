@@ -39,9 +39,16 @@ public abstract class QueryClient {
         try {
             checkArguments();
             this.hz = startHazelcastClient(this.addresses);
+            logger.warn("Hazelcast client started.");
+            logger.info("Starting to load data.");
             loadData();
+            logger.info("Finished loading data.");
+            logger.info("Starting map/reduce job.");
             resolveQuery();
+            logger.info("Finished map/reduce job.");
+            logger.info("Destroying data.");
             destroyData();
+            logger.info("All data was destroyed.");
             this.hz.shutdown();
         } catch (IllegalArgumentException e) {
             // TODO
