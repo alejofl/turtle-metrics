@@ -34,12 +34,8 @@ public class TripsBetweenStations extends QueryClient {
         Map<Integer, Station> stations = getHz().getMap(Util.HAZELCAST_NAMESPACE);
         Set<TripsBetweenStationsResult> results = new TreeSet<>();
         for (Map.Entry<IntegerPair, Integer> entry : reducedData.entrySet()) {
-            Station stationA = stations.getOrDefault(entry.getKey().getKey(), null);
-            Station stationB = stations.getOrDefault(entry.getKey().getValue(), null);
-
-            if (stationA == null || stationB == null) {
-                continue;
-            }
+            Station stationA = stations.get(entry.getKey().getKey());
+            Station stationB = stations.get(entry.getKey().getValue());
 
             results.add(new TripsBetweenStationsResult(
                     stationA.getName(),
