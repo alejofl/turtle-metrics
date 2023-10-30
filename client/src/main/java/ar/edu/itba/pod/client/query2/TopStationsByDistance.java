@@ -10,6 +10,7 @@ import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -38,7 +39,7 @@ public class TopStationsByDistance extends QueryClient {
     }
 
     @Override
-    public void resolveQuery() throws ExecutionException, InterruptedException {
+    public void resolveQuery() throws ExecutionException, InterruptedException, IOException {
         final JobTracker jobTracker = getHz().getJobTracker(Util.HAZELCAST_NAMESPACE);
 
         final KeyValueSource<Integer, Bike> source = KeyValueSource.fromMultiMap(getHz().getMultiMap(Util.HAZELCAST_NAMESPACE));
