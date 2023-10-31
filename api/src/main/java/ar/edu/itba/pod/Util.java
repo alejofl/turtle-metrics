@@ -8,6 +8,8 @@ public class Util {
     public final static String HAZELCAST_GROUP_PASSWORD = "c77f042090be14f682c74afda6e4cc18";
     public final static String HAZELCAST_NAMESPACE = "g2-namespace";
 
+    public final static String HAZELCAST_NAMESPACE_2 = "g2-namespace-aux";
+
     public final static String STATIONS_FILENAME = "stations.csv";
     public final static String BIKES_FILENAME = "bikes.csv";
 

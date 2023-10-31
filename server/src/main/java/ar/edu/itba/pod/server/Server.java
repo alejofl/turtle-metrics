@@ -33,6 +33,7 @@ public class Server {
         config.getMultiMapConfig(Util.HAZELCAST_NAMESPACE)
                 .setValueCollectionType(MultiMapConfig.ValueCollectionType.LIST);
 
+        // TODO Sacar esto que sirve para logguear todo. Es un ELK o sidecar.
         java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
         rootLogger.setLevel(Level.FINE);
         for(Handler h : rootLogger.getHandlers()) {
