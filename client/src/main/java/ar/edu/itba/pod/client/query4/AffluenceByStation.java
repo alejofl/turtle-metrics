@@ -1,16 +1,15 @@
 package ar.edu.itba.pod.client.query4;
 
-import ar.edu.itba.pod.IntegerPair;
 import ar.edu.itba.pod.StationByDate;
+import ar.edu.itba.pod.TripleInteger;
 import ar.edu.itba.pod.Util;
 import ar.edu.itba.pod.client.QueryClient;
-import ar.edu.itba.pod.client.query1.TripsBetweenStationsResult;
 import ar.edu.itba.pod.data.Bike;
-import ar.edu.itba.pod.data.Station;
-import ar.edu.itba.pod.query1.TripsMapper;
-import ar.edu.itba.pod.query1.TripsReducer;
+import ar.edu.itba.pod.query4.AffluenceByDayMapper;
+import ar.edu.itba.pod.query4.AffluenceByDayReducer;
 import ar.edu.itba.pod.query4.AffluenceMapper;
 import ar.edu.itba.pod.query4.AffluenceReducer;
+import com.hazelcast.core.MultiMap;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
@@ -21,9 +20,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
 public class AffluenceByStation extends QueryClient {
@@ -79,7 +75,25 @@ public class AffluenceByStation extends QueryClient {
         Job<Integer, Bike> job = jobTracker.newJob(source);
 
         Map<StationByDate, Integer> stationsByDays = job
-                .mapper(new AffluenceMapper(startDate, endDate))
+                .mapper(new AffluenceByDayMapper(startDate, endDate))
+                .reducer(new AffluenceByDayReducer())
+                .submit()
+                .get();
+
+        MultiMap<StationByDate, Integer> mmStationsByDays = getHz().getMultiMap(Util.HAZELCAST_NAMESPACE_2);
+
+        for (Map.Entry<StationByDate, Integer> stationByDate : stationsByDays.entrySet()) {
+            mmStationsByDays.put(stationByDate.getKey(), stationByDate.getValue());
+        }
+
+        final JobTracker jobTrackerAux = getHz().getJobTracker(Util.HAZELCAST_NAMESPACE_2);
+
+        final KeyValueSource<StationByDate, Integer> sourceAux = KeyValueSource.fromMultiMap(getHz().getMultiMap(Util.HAZELCAST_NAMESPACE_2));
+
+        Job<StationByDate, Integer> jobAux = jobTrackerAux.newJob(sourceAux);
+
+        Map<Integer, TripleInteger> stationAffluence = jobAux
+                .mapper(new AffluenceMapper())
                 .reducer(new AffluenceReducer())
                 .submit()
                 .get();
