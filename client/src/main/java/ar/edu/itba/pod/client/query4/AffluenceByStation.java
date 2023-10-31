@@ -1,9 +1,12 @@
 package ar.edu.itba.pod.client.query4;
 
 import ar.edu.itba.pod.IntegerPair;
+import ar.edu.itba.pod.StationByDate;
 import ar.edu.itba.pod.Util;
 import ar.edu.itba.pod.client.QueryClient;
+import ar.edu.itba.pod.client.query1.TripsBetweenStationsResult;
 import ar.edu.itba.pod.data.Bike;
+import ar.edu.itba.pod.data.Station;
 import ar.edu.itba.pod.query1.TripsMapper;
 import ar.edu.itba.pod.query1.TripsReducer;
 import ar.edu.itba.pod.query4.AffluenceMapper;
@@ -12,18 +15,22 @@ import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
 public class AffluenceByStation extends QueryClient {
 
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private LocalDateTime startDate;
+    private LocalDate startDate2;
     private LocalDateTime endDate;
 
     public AffluenceByStation() {
@@ -47,13 +54,13 @@ public class AffluenceByStation extends QueryClient {
         }
 
         try {
-            LocalDateTime.parse(startDateArgument, TIME_FORMATTER);
+            startDate = LocalDate.parse(startDateArgument,TIME_FORMATTER).atStartOfDay();
         } catch (DateTimeParseException e) {
             errors.append("Argument 'startDate' must have 'dd/mm/yyyy' format\n");
         }
 
         try {
-            LocalDateTime.parse(endDateArgument, TIME_FORMATTER);
+            endDate = LocalDate.parse(endDateArgument, TIME_FORMATTER).atTime(LocalTime.MAX);
         } catch (DateTimeParseException e) {
             errors.append("Argument 'endDate' must have 'dd/mm/yyyy' format\n");
         }
@@ -71,12 +78,11 @@ public class AffluenceByStation extends QueryClient {
 
         Job<Integer, Bike> job = jobTracker.newJob(source);
 
-        Map<IntegerPair, Integer> reducedData = job
+        Map<StationByDate, Integer> stationsByDays = job
                 .mapper(new AffluenceMapper(startDate, endDate))
                 .reducer(new AffluenceReducer())
                 .submit()
                 .get();
-
 
     }
 
