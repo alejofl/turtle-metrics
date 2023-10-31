@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -36,22 +35,45 @@ public abstract class QueryClient {
     private Path outPath;
 
     public QueryClient() {
+        int status = 0;
         try {
             checkArguments();
             this.hz = startHazelcastClient(this.addresses);
+            logger.warn("Hazelcast client started.");
+            logger.info("Starting to load data.");
             loadData();
+            logger.info("Finished loading data.");
+            logger.info("Starting map/reduce job.");
             resolveQuery();
-            destroyData();
-            this.hz.shutdown();
+            logger.info("Finished map/reduce job.");
         } catch (IllegalArgumentException e) {
-            // TODO
+            System.err.println("Oops! Invalid arguments were sent:\n" + e.getMessage());
+            status = 64;
         } catch (ExecutionException | InterruptedException e) {
-            // TODO
+            System.err.println("Oops! Something went wrong, try again!");
+            logger.error(e.getMessage());
+            status = 130;
+        } catch (IOException e) {
+            System.err.println("Oops! Something went wrong when trying to write the results, try again!");
+            logger.error(e.getMessage());
+            status = 74;
+        } catch (IllegalStateException e) {
+            System.err.println("Oops! We weren't able to connect to Hazelcast. Is the server running?");
+            logger.error(e.getMessage());
+            status = 69;
+        } catch (Exception e) {
+            System.err.println("Oops! Something unexpected went wrong, try again!");
+            logger.error(e.getMessage());
+            status = 127;
+        } finally {
+            logger.info("Destroying data.");
+            destroyData();
+            logger.info("All data was destroyed.");
+            if (this.hz != null) {
+                this.hz.shutdown();
+            }
         }
-    }
-
-    public Path getOutPath() {
-        return outPath;
+        System.exit(status);
     }
 
     public HazelcastInstance getHz() {
@@ -121,6 +143,10 @@ public abstract class QueryClient {
     }
 
     private void loadData() {
+        if (hz == null) {
+            return;
+        }
+
         try (
                 ExecutorService service = Executors.newCachedThreadPool();
                 Stream<String> lines = Files.lines(bikesPath).skip(1)
@@ -171,18 +197,22 @@ public abstract class QueryClient {
         }
     }
 
-    public abstract void resolveQuery() throws ExecutionException, InterruptedException;
+    public abstract void resolveQuery() throws ExecutionException, InterruptedException, IOException;
 
     public abstract String getQueryNumber();
 
     public abstract String getQueryHeader();
 
     private void destroyData() {
+        if (hz == null) {
+            return;
+        }
+
         hz.getMap(Util.HAZELCAST_NAMESPACE).clear();
         hz.getMultiMap(Util.HAZELCAST_NAMESPACE).clear();
     }
 
-    public void writeResults(Collection<? extends Result> results) {
+    public void writeResults(Collection<? extends Result> results) throws IOException {
         Path queryPath = outPath.resolve("query" + getQueryNumber() + ".csv");
         try (BufferedWriter writer = Files.newBufferedWriter(
                 queryPath, StandardOpenOption.WRITE,
@@ -195,8 +225,6 @@ public abstract class QueryClient {
                 writer.write(result.toString());
                 writer.newLine();
             }
-        } catch (IOException e) {
-            // TODO
         }
     }
 
