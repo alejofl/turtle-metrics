@@ -1,10 +1,13 @@
 package ar.edu.itba.pod.client.query4;
 
+import ar.edu.itba.pod.IntegerPair;
 import ar.edu.itba.pod.StationByDate;
 import ar.edu.itba.pod.TripleInteger;
 import ar.edu.itba.pod.Util;
 import ar.edu.itba.pod.client.QueryClient;
+import ar.edu.itba.pod.client.query1.TripsBetweenStationsResult;
 import ar.edu.itba.pod.data.Bike;
+import ar.edu.itba.pod.data.Station;
 import ar.edu.itba.pod.query4.AffluenceByDayMapper;
 import ar.edu.itba.pod.query4.AffluenceByDayReducer;
 import ar.edu.itba.pod.query4.AffluenceMapper;
@@ -20,6 +23,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
 public class AffluenceByStation extends QueryClient {
@@ -97,6 +102,24 @@ public class AffluenceByStation extends QueryClient {
                 .reducer(new AffluenceReducer())
                 .submit()
                 .get();
+
+        Map<Integer, Station> stations = getHz().getMap(Util.HAZELCAST_NAMESPACE);
+        Set<AffluenceByStationResult> results = new TreeSet<>();
+        for (Map.Entry<Integer, TripleInteger> entry : stationAffluence.entrySet()) {
+            Station station = stations.getOrDefault(entry.getKey(), null);
+
+            if (station == null) {
+                continue;
+            }
+
+            results.add(new AffluenceByStationResult(
+                    station.getName(),
+                    entry.getValue().getFirst(),
+                    entry.getValue().getSecond(),
+                    entry.getValue().getThird())
+            );
+        }
+        writeResults(results);
 
     }
 
