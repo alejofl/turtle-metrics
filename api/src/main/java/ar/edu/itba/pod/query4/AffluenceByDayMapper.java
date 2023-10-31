@@ -18,9 +18,9 @@ public class AffluenceByDayMapper implements Mapper<Integer, Bike, StationByDate
     }
     @Override
     public void map(Integer integer, Bike bike, Context<StationByDate, Integer> context) {
-//        if (isValidDate(bike.getStartDate(), bike.getEndDate())) {
-//            return;
-//        }
+        if (!isValidDate(bike.getStartDate(), bike.getEndDate())) {
+            return;
+        }
         context.emit(StationByDate.of(bike.getStartStationPK(), bike.getStartDate().toLocalDate()), -1);
         context.emit(StationByDate.of(bike.getEndStationPK(), bike.getEndDate().toLocalDate()), 1);
     }
