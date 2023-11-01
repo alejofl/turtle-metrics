@@ -1,7 +1,7 @@
 package ar.edu.itba.pod.client.query3;
 
 import ar.edu.itba.pod.IntegerPair;
-import ar.edu.itba.pod.LocalDateTimeLongPair;
+import ar.edu.itba.pod.LongTripValues;
 import ar.edu.itba.pod.Util;
 import ar.edu.itba.pod.client.QueryClient;
 import ar.edu.itba.pod.data.Bike;
@@ -34,7 +34,7 @@ public class LongestTripsBetweenStations extends QueryClient {
 
         Job<Integer, Bike> job = jobTracker.newJob(source);
 
-        Map<IntegerPair, LocalDateTimeLongPair> reducedData = job
+        Map<Integer, LongTripValues> reducedData = job
                 .mapper(new LongTripMapper())
                 .reducer(new LongTripReducer())
                 .submit()
@@ -43,15 +43,15 @@ public class LongestTripsBetweenStations extends QueryClient {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMATTER);
         Map<Integer, Station> stations = getHz().getMap(Util.HAZELCAST_NAMESPACE);
         Set<LongestTripBetweenStationsResult> results = new TreeSet<>();
-        for (Map.Entry<IntegerPair, LocalDateTimeLongPair> entry : reducedData.entrySet()) {
-            Station stationA = stations.get(entry.getKey().getKey());
-            Station stationB = stations.get(entry.getKey().getValue());
+        for (Map.Entry<Integer, LongTripValues> entry : reducedData.entrySet()) {
+            Station stationA = stations.get(entry.getKey());
+            Station stationB = stations.get(entry.getValue().getEndStation());
 
             results.add(new LongestTripBetweenStationsResult(
                     stationA.getName(),
                     stationB.getName(),
-                    entry.getValue().getKey().format(formatter),
-                    entry.getValue().getValue())
+                    entry.getValue().getStartDate().format(formatter),
+                    entry.getValue().getMinutes())
             );
         }
         writeResults(results);

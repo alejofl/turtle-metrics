@@ -1,18 +1,19 @@
 package ar.edu.itba.pod.query3;
 
 import ar.edu.itba.pod.IntegerPair;
-import ar.edu.itba.pod.LocalDateTimeLongPair;
+import ar.edu.itba.pod.LongTripValues;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
 import java.time.LocalDateTime;
 
-public class LongTripReducer implements ReducerFactory<IntegerPair, LocalDateTimeLongPair, LocalDateTimeLongPair> {
+public class LongTripReducer implements ReducerFactory<Integer, LongTripValues, LongTripValues> {
     @Override
-    public Reducer<LocalDateTimeLongPair, LocalDateTimeLongPair> newReducer(IntegerPair integerPair) {
+    public Reducer<LongTripValues, LongTripValues> newReducer(Integer integerPair) {
         return new Reducer<>() {
-            private long max;
+            private int endStation;
             private LocalDateTime startDate;
+            private long max;
 
             @Override
             public void beginReduce () {
@@ -20,16 +21,20 @@ public class LongTripReducer implements ReducerFactory<IntegerPair, LocalDateTim
             }
 
             @Override
-            public void reduce(LocalDateTimeLongPair value) {
-                if(value.getValue() > max || max == 0) {
-                    max = value.getValue();
-                    startDate = value.getKey();
+            public void reduce(LongTripValues value) {
+                if(value.getMinutes() > max || max == 0) {
+                    endStation = value.getEndStation();
+                    startDate = value.getStartDate();
+                    max = value.getMinutes();
+                } else if(value.getMinutes() == max && value.getStartDate().isBefore(startDate)) {
+                    endStation = value.getEndStation();
+                    startDate = value.getStartDate();
                 }
             }
 
             @Override
-            public LocalDateTimeLongPair finalizeReduce() {
-                return LocalDateTimeLongPair.of(startDate,max);
+            public LongTripValues finalizeReduce() {
+                return LongTripValues.of(endStation,startDate,max);
             }
         };
     }
