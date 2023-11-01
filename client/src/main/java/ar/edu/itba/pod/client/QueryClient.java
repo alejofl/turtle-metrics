@@ -151,50 +151,20 @@ public abstract class QueryClient {
 
         try (
                 ExecutorService service = Executors.newCachedThreadPool();
-                Stream<String> lines = Files.lines(bikesPath).skip(1)
         ) {
-            lines.forEach(line -> {
-                String[] fields = line.split(";");
+            service.submit(new LoadBikesRunnable(
+                    hz.getMultiMap(Util.HAZELCAST_NAMESPACE),
+                    bikesPath
+            ));
+            service.submit(new LoadStationsRunnable(
+                    hz.getMap(Util.HAZELCAST_NAMESPACE),
+                    stationsPath
+            ));
 
-                service.submit(new LoadBikeRunnable(
-                        hz.getMultiMap(Util.HAZELCAST_NAMESPACE),
-                        Bike.of(
-                                Integer.parseInt(fields[1]),
-                                Integer.parseInt(fields[3]),
-                                LocalDateTime.parse(fields[0], Util.INPUT_DATETIME_FORMAT),
-                                LocalDateTime.parse(fields[2], Util.INPUT_DATETIME_FORMAT),
-                                fields[4].charAt(0) == '1'
-                        )
-                ));
-            });
             service.shutdown();
             service.awaitTermination(Util.SYSTEM_TIMEOUT, Util.SYSTEM_TIMEOUT_UNIT);
-        } catch (IOException | InterruptedException e) {
-            // TODO log error
-            System.exit(2);
-        }
-
-        try (
-                ExecutorService service = Executors.newCachedThreadPool();
-                Stream<String> lines = Files.lines(stationsPath).skip(1)
-        ) {
-            lines.forEach(line -> {
-                String[] fields = line.split(";");
-
-                service.submit(new LoadStationRunnable(
-                        hz.getMap(Util.HAZELCAST_NAMESPACE),
-                        Station.of(
-                                Integer.parseInt(fields[0]),
-                                fields[1],
-                                Double.parseDouble(fields[2]),
-                                Double.parseDouble(fields[3])
-                        )
-                ));
-            });
-            service.shutdown();
-            service.awaitTermination(Util.SYSTEM_TIMEOUT, Util.SYSTEM_TIMEOUT_UNIT);
-        } catch (IOException | InterruptedException e) {
-            // TODO log error
+        } catch (InterruptedException e) {
+            logger.error("Interrupted load of data");
             System.exit(2);
         }
     }
@@ -230,33 +200,72 @@ public abstract class QueryClient {
         }
     }
 
-    private static class LoadBikeRunnable implements Runnable {
+    private static class LoadBikesRunnable implements Runnable {
         private final MultiMap<Integer, Bike> mm;
-        private final Bike bike;
+        private final Path filePath;
 
-        public LoadBikeRunnable(MultiMap<Integer, Bike> mm, Bike bike) {
+        public LoadBikesRunnable(MultiMap<Integer, Bike> mm, Path filePath) {
             this.mm = mm;
-            this.bike = bike;
+            this.filePath = filePath;
         }
 
         @Override
         public void run() {
-            mm.put(bike.getStartStationPK(), bike);
+            try (
+                    Stream<String> lines = Files.lines(filePath).skip(1).parallel()
+            ) {
+                lines.forEach(line -> {
+                    String[] fields = line.split(";");
+
+                    mm.put(
+                            Integer.parseInt(fields[1]),
+                            Bike.of(
+                                Integer.parseInt(fields[1]),
+                                Integer.parseInt(fields[3]),
+                                LocalDateTime.parse(fields[0], Util.INPUT_DATETIME_FORMAT),
+                                LocalDateTime.parse(fields[2], Util.INPUT_DATETIME_FORMAT),
+                                fields[4].charAt(0) == '1'
+                            )
+                    );
+                });
+            } catch (IOException e) {
+                logger.error("Error in data loading");
+                logger.error(e.getMessage());
+            }
         }
     }
 
-    private static class LoadStationRunnable implements Runnable {
+    private static class LoadStationsRunnable implements Runnable {
         private final Map<Integer, Station> m;
-        private final Station station;
+        private final Path filePath;
 
-        public LoadStationRunnable(Map<Integer, Station> m, Station station) {
+        public LoadStationsRunnable(Map<Integer, Station> m, Path filePath) {
             this.m = m;
-            this.station = station;
+            this.filePath = filePath;
         }
 
         @Override
         public void run() {
-            m.put(station.getPk(), station);
+            try (
+                    Stream<String> lines = Files.lines(filePath).skip(1).parallel()
+            ) {
+                lines.forEach(line -> {
+                    String[] fields = line.split(";");
+
+                    m.put(
+                            Integer.parseInt(fields[0]),
+                            Station.of(
+                                    Integer.parseInt(fields[0]),
+                                    fields[1],
+                                    Double.parseDouble(fields[2]),
+                                    Double.parseDouble(fields[3])
+                            )
+                    );
+                });
+            } catch (IOException e) {
+                logger.error("Error in data loading");
+                logger.error(e.getMessage());
+            }
         }
     }
 }
