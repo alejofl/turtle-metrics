@@ -6,10 +6,7 @@ import ar.edu.itba.pod.Util;
 import ar.edu.itba.pod.client.QueryClient;
 import ar.edu.itba.pod.data.Bike;
 import ar.edu.itba.pod.data.Station;
-import ar.edu.itba.pod.query4.AffluenceByDayMapper;
-import ar.edu.itba.pod.query4.AffluenceByDayReducer;
-import ar.edu.itba.pod.query4.AffluenceMapper;
-import ar.edu.itba.pod.query4.AffluenceReducer;
+import ar.edu.itba.pod.query4.*;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.MultiMap;
 import com.hazelcast.mapreduce.Job;
@@ -84,6 +81,7 @@ public class AffluenceByStation extends QueryClient {
 
         Map<StationByDate, Integer> stationsByDays = job
                 .mapper(new AffluenceByDayMapper(startDate, endDate))
+                .combiner(new AffluenceByDayCombiner())
                 .reducer(new AffluenceByDayReducer())
                 .submit()
                 .get();

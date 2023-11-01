@@ -7,6 +7,8 @@ import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.config.GroupConfig;
+import com.hazelcast.config.InterfacesConfig;
+import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.MultiMap;
 import org.slf4j.Logger;
@@ -51,19 +53,19 @@ public abstract class QueryClient {
             status = 64;
         } catch (ExecutionException | InterruptedException e) {
             System.err.println("Oops! Something went wrong, try again!");
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             status = 130;
         } catch (IOException e) {
             System.err.println("Oops! Something went wrong when trying to write the results, try again!");
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             status = 74;
         } catch (IllegalStateException e) {
             System.err.println("Oops! We weren't able to connect to Hazelcast. Is the server running?");
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             status = 69;
         } catch (Exception e) {
             System.err.println("Oops! Something unexpected went wrong, try again!");
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             status = 127;
         } finally {
             logger.info("Destroying data.");

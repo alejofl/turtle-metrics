@@ -18,6 +18,8 @@ public class Server {
     public static void main(String[] args) {
         logger.info("Starting Hazelcast cluster...");
 
+        final String subnetMask = System.getProperty("subnetMask");
+
         final Config config = new Config();
         final GroupConfig groupConfig = new GroupConfig()
                 .setName(Util.HAZELCAST_GROUP_NAME)
@@ -26,6 +28,12 @@ public class Server {
 
         final JoinConfig joinConfig = new JoinConfig().setMulticastConfig(new MulticastConfig());
         final NetworkConfig networkConfig = new NetworkConfig().setJoin(joinConfig);
+        if (subnetMask != null) {
+            InterfacesConfig interfacesConfig = new InterfacesConfig()
+                    .setInterfaces(Collections.singletonList(subnetMask))
+                    .setEnabled(true);
+            networkConfig.setInterfaces(interfacesConfig);
+        }
         config.setNetworkConfig(networkConfig);
 
         config.setProperty("hazelcast.logging.type", "none");

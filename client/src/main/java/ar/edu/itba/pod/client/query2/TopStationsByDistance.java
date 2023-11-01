@@ -34,8 +34,6 @@ public class TopStationsByDistance extends QueryClient {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Provided 'n' is not a number");
         }
-
-        System.out.println(resultsQuantity);
     }
 
     @Override
