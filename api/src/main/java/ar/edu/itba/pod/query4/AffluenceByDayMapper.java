@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 public class AffluenceByDayMapper implements Mapper<Integer, Bike, StationByDate, Integer>, HazelcastInstanceAware {
-    private Map<Integer, Station> stations;
+    private transient Map<Integer, Station> stations;
     private final LocalDateTime startDate;
     private final LocalDateTime endDate;
 

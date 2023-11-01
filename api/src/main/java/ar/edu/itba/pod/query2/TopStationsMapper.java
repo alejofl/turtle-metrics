@@ -11,7 +11,7 @@ import com.hazelcast.mapreduce.Mapper;
 import java.util.Map;
 
 public class TopStationsMapper implements Mapper<Integer, Bike, Integer, Double>, HazelcastInstanceAware {
-    private Map<Integer, Station> stations;
+    private transient Map<Integer, Station> stations;
 
     @Override
     public void map(Integer integer, Bike bike, Context<Integer, Double> context) {

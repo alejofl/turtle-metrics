@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 public class LongestTripMapper implements Mapper<Integer, Bike, Integer, LongTripValues>, HazelcastInstanceAware {
-    private Map<Integer, Station> stations;
+    private transient Map<Integer, Station> stations;
 
     @Override
     public void map(Integer integer, Bike bike, Context<Integer, LongTripValues> context) {

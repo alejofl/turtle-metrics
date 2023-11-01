@@ -12,7 +12,7 @@ import com.hazelcast.mapreduce.Mapper;
 import java.util.Map;
 
 public class TripsMapper implements Mapper<Integer, Bike, IntegerPair, Integer>, HazelcastInstanceAware {
-    private Map<Integer, Station> stations;
+    private transient Map<Integer, Station> stations;
 
     public TripsMapper() {
     }
