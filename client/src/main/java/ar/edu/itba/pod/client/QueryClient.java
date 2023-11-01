@@ -91,6 +91,8 @@ public abstract class QueryClient {
         clientNetworkConfig.addAddress(addresses);
         clientConfig.setNetworkConfig(clientNetworkConfig);
 
+        clientConfig.setProperty("hazelcast.logging.type", "none");
+
         return HazelcastClient.newHazelcastClient(clientConfig);
     }
 

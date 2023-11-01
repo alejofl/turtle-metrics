@@ -1,13 +1,12 @@
 package ar.edu.itba.pod.client.query3;
 
-import ar.edu.itba.pod.IntegerPair;
 import ar.edu.itba.pod.LongTripValues;
 import ar.edu.itba.pod.Util;
 import ar.edu.itba.pod.client.QueryClient;
 import ar.edu.itba.pod.data.Bike;
 import ar.edu.itba.pod.data.Station;
-import ar.edu.itba.pod.query3.LongTripMapper;
-import ar.edu.itba.pod.query3.LongTripReducer;
+import ar.edu.itba.pod.query3.LongestTripMapper;
+import ar.edu.itba.pod.query3.LongestTripReducer;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
@@ -19,10 +18,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
-public class LongestTripsBetweenStations extends QueryClient {
-    private final String DATE_FORMATTER= "dd-MM-yyyy HH:mm:ss";
+public class LongestTripForStation extends QueryClient {
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
-    public LongestTripsBetweenStations() {
+    public LongestTripForStation() {
         super();
     }
 
@@ -35,22 +34,21 @@ public class LongestTripsBetweenStations extends QueryClient {
         Job<Integer, Bike> job = jobTracker.newJob(source);
 
         Map<Integer, LongTripValues> reducedData = job
-                .mapper(new LongTripMapper())
-                .reducer(new LongTripReducer())
+                .mapper(new LongestTripMapper())
+                .reducer(new LongestTripReducer())
                 .submit()
                 .get();
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMATTER);
         Map<Integer, Station> stations = getHz().getMap(Util.HAZELCAST_NAMESPACE);
-        Set<LongestTripBetweenStationsResult> results = new TreeSet<>();
+        Set<LongestTripForStationResult> results = new TreeSet<>();
         for (Map.Entry<Integer, LongTripValues> entry : reducedData.entrySet()) {
             Station stationA = stations.get(entry.getKey());
             Station stationB = stations.get(entry.getValue().getEndStation());
 
-            results.add(new LongestTripBetweenStationsResult(
+            results.add(new LongestTripForStationResult(
                     stationA.getName(),
                     stationB.getName(),
-                    entry.getValue().getStartDate().format(formatter),
+                    entry.getValue().getStartDate().format(DATE_FORMATTER),
                     entry.getValue().getMinutes())
             );
         }
@@ -68,6 +66,6 @@ public class LongestTripsBetweenStations extends QueryClient {
     }
 
     public static void main(String[] args) {
-        QueryClient query = new LongestTripsBetweenStations();
+        QueryClient query = new LongestTripForStation();
     }
 }

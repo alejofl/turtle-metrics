@@ -1,13 +1,12 @@
 package ar.edu.itba.pod.query3;
 
-import ar.edu.itba.pod.IntegerPair;
 import ar.edu.itba.pod.LongTripValues;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
 import java.time.LocalDateTime;
 
-public class LongTripReducer implements ReducerFactory<Integer, LongTripValues, LongTripValues> {
+public class LongestTripReducer implements ReducerFactory<Integer, LongTripValues, LongTripValues> {
     @Override
     public Reducer<LongTripValues, LongTripValues> newReducer(Integer integerPair) {
         return new Reducer<>() {

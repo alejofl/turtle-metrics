@@ -28,17 +28,10 @@ public class Server {
         final NetworkConfig networkConfig = new NetworkConfig().setJoin(joinConfig);
         config.setNetworkConfig(networkConfig);
 
-        config.setProperty("hazelcast.logging.type", "debug");
+        config.setProperty("hazelcast.logging.type", "none");
 
         config.getMultiMapConfig(Util.HAZELCAST_NAMESPACE)
                 .setValueCollectionType(MultiMapConfig.ValueCollectionType.LIST);
-
-        // TODO Sacar esto que sirve para logguear todo. Es un ELK o sidecar.
-        java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
-        rootLogger.setLevel(Level.FINE);
-        for(Handler h : rootLogger.getHandlers()) {
-            h.setLevel(Level.FINE);
-        }
 
         // Start cluster
         final HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
