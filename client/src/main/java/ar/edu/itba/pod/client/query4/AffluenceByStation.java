@@ -1,11 +1,9 @@
 package ar.edu.itba.pod.client.query4;
 
-import ar.edu.itba.pod.IntegerPair;
 import ar.edu.itba.pod.StationByDate;
 import ar.edu.itba.pod.TripleInteger;
 import ar.edu.itba.pod.Util;
 import ar.edu.itba.pod.client.QueryClient;
-import ar.edu.itba.pod.client.query1.TripsBetweenStationsResult;
 import ar.edu.itba.pod.data.Bike;
 import ar.edu.itba.pod.data.Station;
 import ar.edu.itba.pod.query4.AffluenceByDayMapper;
@@ -17,6 +15,7 @@ import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -72,7 +71,7 @@ public class AffluenceByStation extends QueryClient {
     }
 
     @Override
-    public void resolveQuery() throws ExecutionException, InterruptedException {
+    public void resolveQuery() throws ExecutionException, InterruptedException, IOException {
         final JobTracker jobTracker = getHz().getJobTracker(Util.HAZELCAST_NAMESPACE);
 
         final KeyValueSource<Integer, Bike> source = KeyValueSource.fromMultiMap(getHz().getMultiMap(Util.HAZELCAST_NAMESPACE));
