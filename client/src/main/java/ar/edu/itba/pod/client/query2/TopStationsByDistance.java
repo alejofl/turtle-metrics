@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class TopStationsByDistance extends QueryClient {
     private int resultsQuantity;
@@ -52,21 +53,14 @@ public class TopStationsByDistance extends QueryClient {
 
         Map<Integer, Station> stations = getHz().getMap(Util.HAZELCAST_NAMESPACE);
         Set<TopStationsByDistanceResult> results = new TreeSet<>();
-        int readResults = 0;
         for (Map.Entry<Integer, Double> entry : reducedData.entrySet()) {
-            if (readResults == resultsQuantity) {
-                break;
-            }
-
             Station station = stations.get(entry.getKey());
             results.add(new TopStationsByDistanceResult(
                     station.getName(),
                     entry.getValue()
             ));
-
-            readResults++;
         }
-        writeResults(results);
+        writeResults(results.stream().limit(resultsQuantity).collect(Collectors.toList()));
     }
 
     @Override
