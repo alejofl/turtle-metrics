@@ -1,6 +1,5 @@
 package ar.edu.itba.pod.query4;
 
-import ar.edu.itba.pod.StationByDate;
 import ar.edu.itba.pod.TripleInteger;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;

@@ -8,7 +8,6 @@ import ar.edu.itba.pod.data.Bike;
 import ar.edu.itba.pod.data.Station;
 import ar.edu.itba.pod.query4.*;
 import com.hazelcast.core.IMap;
-import com.hazelcast.core.MultiMap;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
@@ -89,8 +88,6 @@ public class AffluenceByStation extends QueryClient {
         IMap<StationByDate, Integer> stationsByDaysMap = getHz().getMap(Util.HAZELCAST_NAMESPACE_2);
 
         stationsByDaysMap.putAll(stationsByDays);
-
-//        final JobTracker jobTrackerAux = getHz().getJobTracker(Util.HAZELCAST_NAMESPACE_2);
 
         final KeyValueSource<StationByDate, Integer> otherSource = KeyValueSource.fromMap(stationsByDaysMap);
 

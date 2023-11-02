@@ -7,8 +7,6 @@ import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.config.GroupConfig;
-import com.hazelcast.config.InterfacesConfig;
-import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.MultiMap;
 import org.slf4j.Logger;
@@ -152,7 +150,7 @@ public abstract class QueryClient {
         }
 
         try (
-                ExecutorService service = Executors.newCachedThreadPool();
+                ExecutorService service = Executors.newCachedThreadPool()
         ) {
             service.submit(new LoadBikesRunnable(
                     hz.getMultiMap(Util.HAZELCAST_NAMESPACE),

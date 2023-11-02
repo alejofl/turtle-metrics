@@ -1,7 +1,6 @@
 package ar.edu.itba.pod.client.query4;
 
 import ar.edu.itba.pod.client.Result;
-import ar.edu.itba.pod.client.query1.TripsBetweenStationsResult;
 
 public class AffluenceByStationResult implements Result, Comparable<AffluenceByStationResult> {
 

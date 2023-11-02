@@ -1,8 +1,6 @@
 package ar.edu.itba.pod.query4;
 
 import ar.edu.itba.pod.StationByDate;
-import ar.edu.itba.pod.TripleInteger;
-import ar.edu.itba.pod.data.Bike;
 import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 
